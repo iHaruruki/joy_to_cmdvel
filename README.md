@@ -15,5 +15,10 @@ ros2 run joy joy_node
 ```
 ros2 run joy_to_cmdvel joy_to_cmdvel_node
 ```
+### 参考資料
+[joy_node]に関する説明
+* [joy](https://docs.ros.org/en/humble/p/joy/index.html)
+* [ROS2でPS4のジョイスティック（DualShock4）を使ってみました](https://kanpapa.com/today/2022/09/ros2-joy-ps4-dualshock.html)
+
 ## 更新履歴
 * 2025/01/15: [README.md を作成]

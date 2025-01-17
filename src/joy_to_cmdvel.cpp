@@ -24,10 +24,13 @@ private:
     // geometry_msgs::msg::Twist メッセージの作成
     auto twist = geometry_msgs::msg::Twist();
 
-    // 例: 左スティックの上下（axes[1]）で線形速度、右スティックの左右（axes[3]）で角速度を制御
-    // ※ 軸の番号は環境により異なる場合があるため、必要に応じて変更してください。
-    twist.linear.x  = 1.0 * msg->axes[1];  // 前後の移動（スケールは適宜調整）
-    twist.angular.z = 1.0 * msg->axes[3];  // 旋回（スケールは適宜調整）
+    // 左スティックの上下（axes[1]）で線形速度、右スティックの左右（axes[3]）で角速度を制御
+    twist.linear.x  = 0.5 * msg->axes[1];  // 前後の移動
+    twist.linear.y  = 0.5 * msg->axes[0];  // 横の移動
+    twist.linear.z  = 0.0;
+    twist.angular.x = 0.0;
+    twist.angular.y = 0.0;
+    twist.angular.z = 0.5 * msg->axes[3];  // 旋回
 
     // /cmd_vel トピックへパブリッシュ
     cmd_vel_pub_->publish(twist);
