@@ -31,7 +31,7 @@ private:
     twist.linear.z  = 0.0;
     twist.angular.x = 0.0;
     twist.angular.y = 0.0;
-    twist.angular.z = 3.5 * msg->axes[0];  // 旋回
+    twist.angular.z = 1.5 * msg->axes[0];  // 旋回
 
     //---高速モード---//
     // R1ボタン（buttons[5]）が押されている場合は速度を通常モードの1.5倍にする
@@ -47,8 +47,8 @@ private:
 
     RCLCPP_INFO(
       this->get_logger(),
-      "cmd_vel published: linear.x=%.2f, angular.z=%.2f",
-      twist.linear.x, twist.angular.z);
+      "linear.x=%.2f, linear.y=%.2f, angular.z=%.2f",
+      twist.linear.x, twist.linear.y, twist.angular.z);
   }
 
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;

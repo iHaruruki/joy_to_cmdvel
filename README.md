@@ -1,6 +1,21 @@
 # joy_to_cmdvel
-## 概要
+## Discription
 Subscribe to the `/joy` topic and publish `/cmd_vel`
+## How to try
+```
+$ sudo apt install ros-humble-joy
+$ cd <workspace>
+$ git clone https://github.com/iHaruruki/joy_to_cmdvel.git # clone this package
+$ cd <workspace>
+$ colcon build
+$ source install/setup.bash
+$ ros2 run joy joy_node
+$ ros2 run joy_to_cmdvel_node
+```
+# 日本語ver
+## 概要
+ROS2 humble用 DualShock4コントローラー
+`/joy`トピックを購読して、`/cmd_vel`を出版するノード
 ## インストール
 joystick関連のパッケージをインストール
 ```
@@ -24,7 +39,7 @@ ros2 run joy_to_cmdvel joy_to_cmdvel_node
 * 右アナログスティック(RS)
     * 右：[twist.linear.y --] 右移動
     * 左：[twist.linear.y ++] 左移動
-* R1 button
+* R1 Button
     * OFF(msg->buttons[5] == 0)：通常モード
     * ON (msg->buttons[5] == 1)：高速モード<span style="color:red;">（速度を通常モードの1.5倍にする）<span>
 ### 参考資料
