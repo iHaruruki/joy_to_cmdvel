@@ -27,11 +27,11 @@ private:
     //---通常モード---//
     // 左スティックの上下（axes[1]）で前後移動、左スティックの左右（axes[0]）で横移動、右スティックの左右（axes[3]）で角速度を制御
     twist.linear.x  = 0.3 * msg->axes[1];  // 前後の移動
-    twist.linear.y  = 0.3 * msg->axes[0];  // 横の移動
+    twist.linear.y  = 0.3 * msg->axes[3];  // 横の移動
     twist.linear.z  = 0.0;
     twist.angular.x = 0.0;
     twist.angular.y = 0.0;
-    twist.angular.z = 0.3 * msg->axes[3];  // 旋回
+    twist.angular.z = 3.5 * msg->axes[0];  // 旋回
 
     //---高速モード---//
     // R1ボタン（buttons[5]）が押されている場合は速度を通常モードの1.5倍にする
