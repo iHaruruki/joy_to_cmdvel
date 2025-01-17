@@ -8,6 +8,24 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+
+# 実行ファイルの追加
+add_executable(joy_to_cmdvel_node src/joy_to_cmdvel.cpp)
+
+# 依存関係のリンク
+ament_target_dependencies(joy_to_cmdvel_node
+  rclcpp
+  sensor_msgs
+  geometry_msgs
+)
+
+# インストール設定
+install(TARGETS
+  joy_to_cmdvel_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
