@@ -3,7 +3,7 @@
 <package format="3">
   <name>joy_to_cmdvel</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Subscribe to the /joy topic and publish /cmd_vel</description>
   <maintainer email="haruki.isono861@gmail.com">peach</maintainer>
   <license>TODO: License declaration</license>
 
