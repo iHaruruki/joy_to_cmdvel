@@ -4,9 +4,9 @@ Subscribe to the `/joy` topic and publish `/cmd_vel`
 ## How to try
 ```
 $ sudo apt install ros-humble-joy
-$ cd <workspace>
+$ cd ros2_ws/src
 $ git clone https://github.com/iHaruruki/joy_to_cmdvel.git # clone this package
-$ cd <workspace>
+$ cd ros2_ws
 $ colcon build
 $ source install/setup.bash
 $ ros2 run joy joy_node
