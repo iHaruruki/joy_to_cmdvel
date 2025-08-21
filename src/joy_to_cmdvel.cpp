@@ -36,7 +36,8 @@ private:
     //---高速モード---//
     // R1ボタン（buttons[5]）が押されている場合は速度を通常モードの1.5倍にする
     if (msg->buttons[5] == 1) {
-        RCLCPP_INFO(this->get_logger(), "高速モード");
+        RCLCPP_INFO(this->get_logger(), "โหมดรวดเร็ว");
+        RCLCPP_INFO(this->get_logger(), "Fast Mode");
         twist.linear.x  *= 1.5;
         twist.linear.y  *= 1.5;
         twist.angular.z *= 1.5;
