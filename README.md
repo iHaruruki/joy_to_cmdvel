@@ -29,9 +29,9 @@ ros2 run joy_to_cmdvel joy_to_cmdvel_node
     * Right: `twist.linear.y --` — move right
     * Left: `twist.linear.y ++` — move left
 * R2 button
-    * Rotate right: `twist.angular.z --` — clockwise
+    * Rotate right: `twist.angular.z --` — turn right
 * L2 button
-    * Rotate left: `twist.angular.z ++` — counter-clockwise
+    * Rotate left: `twist.angular.z ++` — turn left
 ### 参考資料
 [joy_node]に関する説明
 * [joy](https://docs.ros.org/en/humble/p/joy/index.html)
