@@ -32,16 +32,22 @@ private:
     twist.angular.x = 0.0;
     twist.angular.y = 0.0;
     //twist.angular.z = 1.5;
+    if(msg->buttons[6] == 1 && msg->buttons[7] == 0){
+      twist.angular.z = -1.5 * msg->axes[2];
+    }
+    else if(msg->buttons[7] == 1 && msg->buttons[6] == 0){
+      twist.angular.z = 1.5 * msg->axes[5];
+    }
 
     //---高速モード---//
     // R1ボタン（buttons[5]）が押されている場合は速度を通常モードの1.5倍にする
-    if (msg->buttons[5] == 1) {
-        RCLCPP_INFO(this->get_logger(), "โหมดรวดเร็ว");
-        RCLCPP_INFO(this->get_logger(), "Fast Mode");
-        twist.linear.x  *= 1.5;
-        twist.linear.y  *= 1.5;
-        twist.angular.z *= 1.5;
-    }
+    // if (msg->buttons[5] == 1) {
+    //     RCLCPP_INFO(this->get_logger(), "โหมดรวดเร็ว");
+    //     RCLCPP_INFO(this->get_logger(), "Fast Mode");
+    //     twist.linear.x  *= 1.5;
+    //     twist.linear.y  *= 1.5;
+    //     twist.angular.z *= 1.5;
+    // }
 
     // /cmd_vel トピックへパブリッシュ
     cmd_vel_pub_->publish(twist);
