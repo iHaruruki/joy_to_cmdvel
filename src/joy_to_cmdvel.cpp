@@ -19,7 +19,7 @@ public:
     // 最大速度
     declare_parameter<double>("max_linear_x", 0.5); // m/s
     declare_parameter<double>("max_linear_y", 0.5); // m/s
-    declare_parameter<double>("max_angular",  0.5); // rad/s
+    declare_parameter<double>("max_angular",  0.7); // rad/s
 
     // デッドゾーン
     declare_parameter<double>("deadzone", 0.10);      // 左スティック用
