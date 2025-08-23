@@ -33,10 +33,10 @@ private:
     twist.angular.y = 0.0;
     //twist.angular.z = 1.5;
     if(msg->buttons[6] == 1 && msg->buttons[7] == 0){
-      twist.angular.z = -1.5 * msg->axes[2];
+      twist.angular.z = 1.5 * msg->axes[2];
     }
     else if(msg->buttons[7] == 1 && msg->buttons[6] == 0){
-      twist.angular.z = 1.5 * msg->axes[5];
+      twist.angular.z = -1.5 * msg->axes[5];
     }
 
     //---高速モード---//
