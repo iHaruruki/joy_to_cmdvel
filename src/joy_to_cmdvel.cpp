@@ -33,10 +33,10 @@ public:
 
     // --- ここがポイント：加減速リミット（安全） ---
     // 直線・平行移動は m/s^2、旋回は rad/s^2
-    declare_parameter<double>("limit_lin_accel",  0.4); // 加速上限
-    declare_parameter<double>("limit_lin_decel",  0.5); // 減速上限（ちょっと大きめで止まりやすく）
-    declare_parameter<double>("limit_ang_accel",  0.8);
-    declare_parameter<double>("limit_ang_decel",  1.0);
+    declare_parameter<double>("limit_lin_accel",  0.05); // 加速上限
+    declare_parameter<double>("limit_lin_decel",  0.3); // 減速上限
+    declare_parameter<double>("limit_ang_accel",  0.6);
+    declare_parameter<double>("limit_ang_decel",  0.8);
 
     // 取得
     axis_forward_ = get_parameter("axis_forward").as_int();
@@ -59,8 +59,8 @@ public:
 
     lim_ax_ = get_parameter("limit_lin_accel").as_double();
     lim_dx_ = get_parameter("limit_lin_decel").as_double();
-    lim_ay_ = lim_ax_; // 平行移動も同じにする（必要なら別パラメータに分離可）
-    lim_dy_ = lim_dx_;
+    lim_ay_ = get_parameter("limit_lin_accel").as_double();
+    lim_dy_ = get_parameter("limit_lin_decel").as_double();
     lim_aw_ = get_parameter("limit_ang_accel").as_double();
     lim_dw_ = get_parameter("limit_ang_decel").as_double();
 
