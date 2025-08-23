@@ -33,8 +33,8 @@ public:
     declare_parameter<int>("axis_R2",   5);
 
     // --- 加減速リミット（対称＆二段階） ---
-    declare_parameter<double>("limit_lin_accel", 0.22);  // m/s^2
-    declare_parameter<double>("limit_lin_decel", 0.22);  // m/s^2
+    declare_parameter<double>("limit_lin_accel", 0.3);  // m/s^2
+    declare_parameter<double>("limit_lin_decel", 0.3);  // m/s^2
     declare_parameter<double>("limit_ang_accel", 0.8);  // rad/s^2
     declare_parameter<double>("limit_ang_decel", 1.0);  // rad/s^2
 
