@@ -21,22 +21,30 @@ public:
 private:
   void joy_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
   {
+
     // geometry_msgs::msg::Twist メッセージの作成
     auto twist = geometry_msgs::msg::Twist();
 
+    // デッドゾーン設定
+    auto apply_deadzone = [](float value, float threshold = 0.1f) {
+      return (std::abs(value) < threshold) ? 0.0f : value;
+    };
+
     //---通常モード---//
-    // 左スティックの上下（axes[1]）で前後移動、左スティックの左右（axes[0]）で横移動、右スティックの左右（axes[3]）で角速度を制御
-    twist.linear.x  = 0.3 * msg->axes[1];  // 前後の移動
-    twist.linear.y  = 0.3 * msg->axes[0];  // 横の移動
-    twist.linear.z  = 0.0;
-    twist.angular.x = 0.0;
-    twist.angular.y = 0.0;
-    //twist.angular.z = 1.5;
+    twist.linear.x  = 0.3f * apply_deadzone(msg->axes[1]);  // 前後の移動
+    twist.linear.y  = 0.3f * apply_deadzone(msg->axes[0]);  // 横の移動
+    twist.linear.z  = 0.0f;
+    twist.angular.x = 0.0f;
+    twist.angular.y = 0.0f;
+    twist.angular.z = 0.0f;
+
+    // angular.z の制御
     if(msg->buttons[6] == 1 && msg->buttons[7] == 0){
-      twist.angular.z = 1.5 * msg->axes[2];
-    }
-    else if(msg->buttons[7] == 1 && msg->buttons[6] == 0){
-      twist.angular.z = -1.5 * msg->axes[5];
+      twist.angular.z = 1.5f * apply_deadzone(msg->axes[2]);
+    } else if(msg->buttons[7] == 1 && msg->buttons[6] == 0){
+      twist.angular.z = -1.5f * apply_deadzone(msg->axes[5]);
+    } else {
+      twist.angular.z = 0.0f;
     }
 
     //---高速モード---//
