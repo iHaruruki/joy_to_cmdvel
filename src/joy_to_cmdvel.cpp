@@ -10,19 +10,20 @@ public:
   JoyToCmdVel_TriggersLR() : Node("joy_to_cmd_vel_triggers_lr")
   {
     // --- 入力（左スティック、トリガ） ---
-    declare_parameter<int>("axis_forward", 1);       // 左スティック 縦
-    declare_parameter<int>("axis_strafe",  0);       // 左スティック 横
+    declare_parameter<int>("axis_forward", 1);
+    declare_parameter<int>("axis_strafe",  0);
     declare_parameter<bool>("invert_forward", false);
     declare_parameter<bool>("invert_strafe",  false);
 
-    // --- 最大速度（到達上限） ---
-    declare_parameter<double>("max_linear_x", 0.5);  // m/s
-    declare_parameter<double>("max_linear_y", 0.5);  // m/s
-    declare_parameter<double>("max_angular",  0.7);  // rad/s
+    // --- 最大速度 ---
+    declare_parameter<double>("max_linear_x", 0.5);   // m/s
+    declare_parameter<double>("max_linear_y", 0.5);   // m/s
+    declare_parameter<double>("max_angular",  0.7);   // rad/s
 
-    // --- デッドゾーン ---
-    declare_parameter<double>("deadzone", 0.10);          // スティック用
-    declare_parameter<double>("trigger_deadzone", 0.05);  // トリガ軸用
+    // --- デッドゾーン & スナップ ---
+    declare_parameter<double>("deadzone", 0.10);
+    declare_parameter<double>("trigger_deadzone", 0.05);
+    declare_parameter<double>("zero_snap", 0.02);     // これ未満は 0 に吸着（m/s, rad/s）
 
     // --- L2/R2 の取得方法（ボタン or 軸） ---
     declare_parameter<bool>("triggers_are_axes", true);
@@ -31,12 +32,11 @@ public:
     declare_parameter<int>("axis_L2",   2);
     declare_parameter<int>("axis_R2",   5);
 
-    // --- ここがポイント：加減速リミット（安全） ---
-    // 直線・平行移動は m/s^2、旋回は rad/s^2
-    declare_parameter<double>("limit_lin_accel",  0.05); // 加速上限
-    declare_parameter<double>("limit_lin_decel",  0.3); // 減速上限
-    declare_parameter<double>("limit_ang_accel",  0.6);
-    declare_parameter<double>("limit_ang_decel",  0.8);
+    // --- 加減速リミット（対称＆二段階） ---
+    declare_parameter<double>("limit_lin_accel", 0.05);  // m/s^2
+    declare_parameter<double>("limit_lin_decel", 0.1);  // m/s^2
+    declare_parameter<double>("limit_ang_accel", 0.8);  // rad/s^2
+    declare_parameter<double>("limit_ang_decel", 1.0);  // rad/s^2
 
     // 取得
     axis_forward_ = get_parameter("axis_forward").as_int();
@@ -48,8 +48,9 @@ public:
     vy_max_ = get_parameter("max_linear_y").as_double();
     wz_max_ = get_parameter("max_angular").as_double();
 
-    dz_  = get_parameter("deadzone").as_double();
-    tdz_ = get_parameter("trigger_deadzone").as_double();
+    dz_     = get_parameter("deadzone").as_double();
+    tdz_    = get_parameter("trigger_deadzone").as_double();
+    snap_   = get_parameter("zero_snap").as_double();
 
     trig_axes_ = get_parameter("triggers_are_axes").as_bool();
     btn_L2_ = get_parameter("button_L2").as_int();
@@ -59,8 +60,8 @@ public:
 
     lim_ax_ = get_parameter("limit_lin_accel").as_double();
     lim_dx_ = get_parameter("limit_lin_decel").as_double();
-    lim_ay_ = get_parameter("limit_lin_accel").as_double();
-    lim_dy_ = get_parameter("limit_lin_decel").as_double();
+    lim_ay_ = lim_ax_;
+    lim_dy_ = lim_dx_;
     lim_aw_ = get_parameter("limit_ang_accel").as_double();
     lim_dw_ = get_parameter("limit_ang_decel").as_double();
 
@@ -71,7 +72,7 @@ public:
     cmd_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
     last_time_ = now();
-    RCLCPP_INFO(get_logger(), "Started joy_to_cmd_vel_triggers_lr (with accel/decel limits)");
+    RCLCPP_INFO(get_logger(), "Started joy_to_cmd_vel_triggers_lr (symmetric decel)");
   }
 
 private:
@@ -94,26 +95,46 @@ private:
     return (v < tdz_) ? 0.0 : v;
   }
 
-  // 目標 target を前回 prev から、dt秒で「最大加速/減速」に収めて更新
-  static double slew_sep(double target, double prev,
-                         double limit_accel, double limit_decel, double dt)
+  // 二段階スルーレート：
+  // 1) 目標と現在の符号が異なる間は「ゼロへ向かう減速上限」で0に近づける
+  // 2) 符号が同じになったら、目標との大小で「加速 or 減速」上限を適用
+  static double slew_two_stage(double target, double prev,
+                               double a, double d, double dt, double snap)
   {
-    double delta = target - prev;
-    double max_up   =  std::max(0.0, limit_accel) * dt;
-    double max_down =  std::max(0.0, limit_decel) * dt;
-    if (delta > 0.0)      delta = std::min(delta,  max_up);
-    else if (delta < 0.0) delta = std::max(delta, -max_down);
-    return prev + delta;
+    // ゼロ吸着
+    if (std::abs(prev) < snap) prev = 0.0;
+    if (std::abs(target) < snap) target = 0.0;
+
+    double next = prev;
+    // 符号が違う → まずは 0 に向けて減速
+    if (prev * target < 0.0) {
+      double step_to_zero = std::clamp(-prev, -d*dt, d*dt);
+      next = prev + step_to_zero;
+      // 行き過ぎ防止
+      if ((prev > 0.0 && next < 0.0) || (prev < 0.0 && next > 0.0))
+        next = 0.0;
+      return next;
+    }
+
+    // ここから符号は同じ（またはどちらか0）
+    double limit = (std::abs(target) > std::abs(prev)) ? a : d;
+    double delta = std::clamp(target - prev, -limit*dt, limit*dt);
+    next = prev + delta;
+
+    // 微小域の収束を早める
+    if (std::abs(next) < snap && std::abs(target) == 0.0)
+      next = 0.0;
+    return next;
   }
 
   void joy_cb(const sensor_msgs::msg::Joy::SharedPtr msg)
   {
-    // 経過時間 dt を計算
+    // 経過時間
     rclcpp::Time t = now();
     double dt = std::max(1e-3, (t - last_time_).seconds());
     last_time_ = t;
 
-    // --- 左スティック：全方向移動（目標値） ---
+    // --- 左スティック：全方向移動（目標） ---
     double fwd  = dz(get_axis(msg, axis_forward_));
     double strf = dz(get_axis(msg, axis_strafe_));
     if (inv_fwd_)  fwd  = -fwd;
@@ -122,8 +143,7 @@ private:
     double vx_target = clamp(vx_max_ * fwd,  -vx_max_, vx_max_);
     double vy_target = clamp(vy_max_ * strf, -vy_max_, vy_max_);
 
-    // --- 旋回は L2 / R2 ---
-    // L2：左（+wz）、R2：右（-wz）
+    // --- 旋回：L2（＋） / R2（−） ---
     double wz_target = 0.0;
     if (trig_axes_) {
       double l2 = trigger01(get_axis(msg, axis_L2_));
@@ -135,10 +155,10 @@ private:
       wz_target = wz_max_ * (double(l2) - double(r2));
     }
 
-    // --- スルーレート制限（ここで“急発進・急停止”を抑制） ---
-    vx_prev_ = slew_sep(vx_target, vx_prev_, lim_ax_, lim_dx_, dt);
-    vy_prev_ = slew_sep(vy_target, vy_prev_, lim_ay_, lim_dy_, dt);
-    wz_prev_ = slew_sep(wz_target, wz_prev_, lim_aw_, lim_dw_, dt);
+    // --- 対称スルーレート（ゼロ跨ぎ対策つき） ---
+    vx_prev_ = slew_two_stage(vx_target, vx_prev_, lim_ax_, lim_dx_, dt, snap_);
+    vy_prev_ = slew_two_stage(vy_target, vy_prev_, lim_ay_, lim_dy_, dt, snap_);
+    wz_prev_ = slew_two_stage(wz_target, wz_prev_, lim_aw_, lim_dw_, dt, snap_);
 
     geometry_msgs::msg::Twist cmd;
     cmd.linear.x  = vx_prev_;
@@ -151,23 +171,22 @@ private:
       "vx=%.2f vy=%.2f wz=%.2f  (dt=%.3f)", cmd.linear.x, cmd.linear.y, cmd.angular.z, dt);
   }
 
-  // ---- メンバ ----
+  // メンバ
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
 
   int axis_forward_, axis_strafe_;
   bool inv_fwd_, inv_strf_;
   double vx_max_, vy_max_, wz_max_;
-  double dz_, tdz_;
+  double dz_, tdz_, snap_;
   bool trig_axes_;
   int btn_L2_, btn_R2_, axis_L2_, axis_R2_;
 
   // 加減速上限
-  double lim_ax_, lim_dx_; // x 方向（前後）
-  double lim_ay_, lim_dy_; // y 方向（左右）
-  double lim_aw_, lim_dw_; // yaw
+  double lim_ax_, lim_dx_;
+  double lim_ay_, lim_dy_;
+  double lim_aw_, lim_dw_;
 
-  // ステート
   rclcpp::Time last_time_;
   double vx_prev_{0.0}, vy_prev_{0.0}, wz_prev_{0.0};
 };
