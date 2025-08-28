@@ -9,8 +9,8 @@ public:
   JoyToCmdVel() : Node("joy_to_cmd_vel")
   {
     // パラメータ宣言
-    declare_parameter<double>("max_linear", 0.5);   // m/s
-    declare_parameter<double>("max_angular", 1.0);  // rad/s
+    declare_parameter<double>("max_linear", 0.3);   // m/s
+    declare_parameter<double>("max_angular", 0.7);  // rad/s
     declare_parameter<double>("deadzone", 0.1);
     declare_parameter<double>("trigger_deadzone", 0.05);
 
